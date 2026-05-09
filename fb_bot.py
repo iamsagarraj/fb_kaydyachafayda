@@ -33,16 +33,16 @@ else:
     state["family_count"] += 1
 
 # --- 4. GENERATE CONTENT ---
+# We use gemini-2.0-flash-lite which is the standard free-tier model in 2026
 prompt = f"Adv. Sagar Shirsat म्हणून 'कायद्याचा फायदा' साठी {niche} ({perspective}) वर फेसबुक पोस्ट लिहा. शुद्ध पुणेरी मराठी वापरा. हेडलाईन बोल्ड करा."
 
 print(f"Generating post for: {niche}...")
 
 # --- 5. EXECUTION & POSTING ---
 try:
-    # Using 1.5-flash as it often has a more reliable 'Free Tier' quota
-    # when 2.0/3.0 models show 'Limit 0'
+    # 2026 Stable Model Name
     response = client.models.generate_content(
-        model="gemini-1.5-flash", 
+        model="gemini-2.0-flash-lite", 
         contents=prompt
     )
     
@@ -51,7 +51,7 @@ try:
         
     post_text = response.text
 
-    # Post to FB
+    # Post to FB - 'me' acts as your Page identity
     graph.put_object(parent_object='me', connection_name='feed', message=post_text)
     print("Victory! Post published successfully.")
 
@@ -61,8 +61,11 @@ try:
     with open(STATE_FILE, "w") as f: json.dump(state, f, indent=4)
 
 except Exception as e:
-    # Detailed error logging to see exactly why it's failing
     print(f"An error occurred: {e}")
-    if "429" in str(e):
-        print("QUOTA ERROR: Try creating a NEW API Key in a NEW project in AI Studio.")
-    exit(1)
+    # Final fallback: if 2.0-lite fails, try gemini-2.0-flash (standard)
+    if "404" in str(e) or "NOT_FOUND" in str(e):
+        print("Model not found. Trying standard flash...")
+        response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
+        graph.put_object(parent_object='me', connection_name='feed', message=response.text)
+    else:
+        exit(1)
