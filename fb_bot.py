@@ -41,8 +41,13 @@ try:
     post_text = response.text
 
     # --- 5. POST TO FB ---
-    graph.put_object(parent_object=FB_PAGE_ID, connection_name='feed', message=post_text)
-    print("Victory! Post published.")
+    # --- 5. POST TO FACEBOOK ---
+try:
+    # Use 'me' instead of FB_PAGE_ID when using a Page Access Token
+    graph.put_object(parent_object='me', connection_name='feed', message=post_text)
+    print("Victory! Post published successfully.")
+    
+    # ... (rest of your save logic)
 
     # --- 6. SAVE ---
     history.append(f"{niche}: {perspective}")
