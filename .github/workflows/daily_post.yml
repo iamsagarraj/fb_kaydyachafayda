@@ -17,13 +17,13 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install google-genai facebook-sdk
+        # Added huggingface_hub here
+        run: pip install huggingface_hub facebook-sdk 
 
       - name: Run Script
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
           FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
-          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
         run: python fb_bot.py
 
       - name: Commit and Push History
