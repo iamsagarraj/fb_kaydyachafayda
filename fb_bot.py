@@ -40,9 +40,10 @@ print(f"Generating post for: {niche}...")
 
 # --- 5. EXECUTION & POSTING ---
 try:
-    # 2026 Stable Model Name
+    # Using the universal alias 'gemini-1.5-flash' 
+    # This automatically routes to the best available free model
     response = client.models.generate_content(
-        model="gemini-2.0-flash-lite", 
+        model="gemini-1.5-flash", 
         contents=prompt
     )
     
@@ -51,7 +52,7 @@ try:
         
     post_text = response.text
 
-    # Post to FB - 'me' acts as your Page identity
+    # Post to FB
     graph.put_object(parent_object='me', connection_name='feed', message=post_text)
     print("Victory! Post published successfully.")
 
