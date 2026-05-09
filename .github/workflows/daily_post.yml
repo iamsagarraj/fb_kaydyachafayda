@@ -1,7 +1,7 @@
 name: Daily Legal Post
 on:
   schedule:
-    - cron: '30 3 * * *' # Runs at 9:00 AM IST daily
+    - cron: '30 3 * * *' # 9:00 AM IST
   workflow_dispatch:
 
 jobs:
@@ -17,8 +17,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install google-generativeai facebook-sdk
-        run: pip install google-genai facebook-sdk # Use the new google-genai library
+        run: pip install google-genai facebook-sdk
 
       - name: Run Script
         env:
@@ -32,5 +31,5 @@ jobs:
           git config --global user.name 'AdvSagarBot'
           git config --global user.email 'bot@users.noreply.github.com'
           git add post_history.json niche_state.json
-          git commit -m "Update post history"
+          git commit -m "Update post history" || exit 0
           git push
