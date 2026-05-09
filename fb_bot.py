@@ -8,6 +8,7 @@ import facebook
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 FB_PAGE_TOKEN = os.getenv("FB_PAGE_TOKEN")
 
+# Initialize Clients
 client = genai.Client(api_key=GEMINI_API_KEY)
 graph = facebook.GraphAPI(access_token=FB_PAGE_TOKEN)
 
@@ -15,11 +16,6 @@ HISTORY_FILE = "post_history.json"
 STATE_FILE = "niche_state.json"
 
 # --- 2. LOAD DATA ---
-if not os.path.exists(HISTORY_FILE):
-    with open(HISTORY_FILE, "w") as f: json.dump([], f)
-if not os.path.exists(STATE_FILE):
-    with open(STATE_FILE, "w") as f: json.dump({"banking_count": 0, "family_count": 0}, f)
-
 with open(HISTORY_FILE, "r") as f: history = json.load(f)
 with open(STATE_FILE, "r") as f: state = json.load(f)
 
@@ -33,17 +29,15 @@ else:
     state["family_count"] += 1
 
 # --- 4. GENERATE CONTENT ---
-# We use gemini-2.0-flash-lite which is the standard free-tier model in 2026
 prompt = f"Adv. Sagar Shirsat म्हणून 'कायद्याचा फायदा' साठी {niche} ({perspective}) वर फेसबुक पोस्ट लिहा. शुद्ध पुणेरी मराठी वापरा. हेडलाईन बोल्ड करा."
 
 print(f"Generating post for: {niche}...")
 
 # --- 5. EXECUTION & POSTING ---
 try:
-    # Using the universal alias 'gemini-1.5-flash' 
-    # This automatically routes to the best available free model
+    # Use 'gemini-2.0-flash' - the standard 2026 free model
     response = client.models.generate_content(
-        model="gemini-1.5-flash", 
+        model="gemini-2.0-flash", 
         contents=prompt
     )
     
@@ -62,11 +56,15 @@ try:
     with open(STATE_FILE, "w") as f: json.dump(state, f, indent=4)
 
 except Exception as e:
-    print(f"An error occurred: {e}")
-    # Final fallback: if 2.0-lite fails, try gemini-2.0-flash (standard)
-    if "404" in str(e) or "NOT_FOUND" in str(e):
-        print("Model not found. Trying standard flash...")
-        response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
+    print(f"Primary Model Failed: {e}")
+    # FALLBACK: If your account is brand new, Google sometimes restricts 2.0.
+    # We try 'gemini-2.0-flash-lite' as a last resort.
+    print("Trying Fallback Model...")
+    try:
+        response = client.models.generate_content(model="gemini-2.0-flash-lite", contents=prompt)
         graph.put_object(parent_object='me', connection_name='feed', message=response.text)
-    else:
+        print("Fallback Success!")
+    except Exception as e2:
+        print(f"Critical Quota Failure: {e2}")
+        print("ACTION REQUIRED: Go to AI Studio, create a NEW Project, and get a NEW API Key.")
         exit(1)
