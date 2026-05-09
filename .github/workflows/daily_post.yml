@@ -1,0 +1,35 @@
+name: Daily Legal Post
+on:
+  schedule:
+    - cron: '30 3 * * *' # Runs at 9:00 AM IST daily
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: pip install google-generativeai facebook-sdk
+
+      - name: Run Script
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+        run: python fb_bot.py
+
+      - name: Commit and Push History
+        run: |
+          git config --global user.name 'AdvSagarBot'
+          git config --global user.email 'bot@users.noreply.github.com'
+          git add post_history.json niche_state.json
+          git commit -m "Update post history"
+          git push
