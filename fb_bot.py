@@ -39,14 +39,19 @@ print(f"Generating post for: {niche}...")
 
 # --- 5. EXECUTION & POSTING ---
 try:
-    # Use the 2026 stable model
+    # Using 1.5-flash as it often has a more reliable 'Free Tier' quota
+    # when 2.0/3.0 models show 'Limit 0'
     response = client.models.generate_content(
-        model="gemini-2.0-flash", 
+        model="gemini-1.5-flash", 
         contents=prompt
     )
+    
+    if not response.text:
+        raise ValueError("AI returned empty response")
+        
     post_text = response.text
 
-    # Post to FB - Using 'me' is the safest way to avoid ID errors
+    # Post to FB
     graph.put_object(parent_object='me', connection_name='feed', message=post_text)
     print("Victory! Post published successfully.")
 
@@ -56,6 +61,8 @@ try:
     with open(STATE_FILE, "w") as f: json.dump(state, f, indent=4)
 
 except Exception as e:
+    # Detailed error logging to see exactly why it's failing
     print(f"An error occurred: {e}")
-    # Final safety exit to prevent GitHub Action from hanging
+    if "429" in str(e):
+        print("QUOTA ERROR: Try creating a NEW API Key in a NEW project in AI Studio.")
     exit(1)
