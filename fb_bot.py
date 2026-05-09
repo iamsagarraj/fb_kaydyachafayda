@@ -43,34 +43,31 @@ else:
         perspective = "Wife's Rights (Maintenance, Stridhan, or Domestic Violence laws)"
     state["family_count"] += 1
 
-# --- 4. GENERATE CONTENT WITH GEMINI 2.0 ---
+# --- 4. GENERATE CONTENT WITH GEMINI ---
 past_topics = ", ".join(history[-15:])
 
 prompt = f"""
 You are Adv. Sagar Shirsat, a professional advocate from Ahilyanagar.
 Write a Facebook post for 'Kaydyacha Fayda' in Puneri Marathi.
-
-TOPIC: {niche}
-FOCUS: {perspective}
-TONE: Shuddh Puneri Marathi (Professional & Authoritative).
-
-STRUCTURE:
-1. Bold Headline.
-2. Common legal problem (4-5 lines).
-3. Legal solution/remedy (6-8 lines).
-4. End with an engaging question for comments.
-
-IMPORTANT: Do not repeat: {past_topics}.
+Topic: {niche} focusing on {perspective}.
+Format: Bold Headline, 4-5 lines problem, 6-8 lines solution, and a question.
+Do not repeat: {past_topics}.
 """
 
 print(f"Generating post for: {niche}...")
 
 try:
+    # Switched to gemini-1.5-flash for better free-tier stability
     response = client.models.generate_content(
-        model="gemini-2.0-flash", 
+        model="gemini-1.5-flash", 
         contents=prompt
     )
+    
+    if not response.text:
+        raise ValueError("AI returned empty response")
+        
     post_text = response.text
+    # ... (Rest of your Facebook posting code)
 
     # --- 5. POST TO FACEBOOK ---
     graph.put_object(parent_object=FB_PAGE_ID, connection_name='feed', message=post_text)
