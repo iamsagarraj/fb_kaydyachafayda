@@ -1,10 +1,10 @@
 import os
 import json
 import random
-from google import genai
+from google import genai # Modern 2026 SDK
 import facebook
 
-# --- 1. CONFIGURATION & API SETUP ---
+# --- 1. CONFIGURATION ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 FB_PAGE_TOKEN = os.getenv("FB_PAGE_TOKEN")
 FB_PAGE_ID = os.getenv("FB_PAGE_ID")
@@ -15,71 +15,43 @@ graph = facebook.GraphAPI(access_token=FB_PAGE_TOKEN)
 HISTORY_FILE = "post_history.json"
 STATE_FILE = "niche_state.json"
 
-# --- 2. INITIALIZE FILES IF THEY DON'T EXIST ---
-if not os.path.exists(HISTORY_FILE):
-    with open(HISTORY_FILE, "w") as f:
-        json.dump([], f)
+# --- 2. LOAD DATA ---
+with open(HISTORY_FILE, "r") as f: history = json.load(f)
+with open(STATE_FILE, "r") as f: state = json.load(f)
 
-if not os.path.exists(STATE_FILE):
-    with open(STATE_FILE, "w") as f:
-        json.dump({"banking_count": 0, "family_count": 0}, f)
-
-# Load existing data
-with open(HISTORY_FILE, "r") as f:
-    history = json.load(f)
-with open(STATE_FILE, "r") as f:
-    state = json.load(f)
-
-# --- 3. DECISION LOGIC (50/50 NICHE & 70/30 HUSBAND/WIFE) ---
+# --- 3. LOGIC ---
 if state["banking_count"] <= state["family_count"]:
-    niche = "बँकिंग कायदा (Banking Law)"
-    perspective = "Technical advice on Cheque Bounce, Loan Recovery, or Bank Notices."
+    niche, perspective = "बँकिंग कायदा", "Technical advice on Cheque Bounce/Notices."
     state["banking_count"] += 1
 else:
-    niche = "कौटुंबिक कायदा (Family Law)"
-    if random.random() < 0.70:
-        perspective = "Husband's Rights (Section 9, Alimony, Child Custody, or 498A Defense)"
-    else:
-        perspective = "Wife's Rights (Maintenance, Stridhan, or Domestic Violence laws)"
+    niche = "कौटुंबिक कायदा"
+    perspective = "Husband's Rights" if random.random() < 0.7 else "Wife's Rights"
     state["family_count"] += 1
 
-# --- 4. GENERATE CONTENT WITH GEMINI ---
-past_topics = ", ".join(history[-15:])
-
-prompt = f"""
-You are Adv. Sagar Shirsat, a professional advocate from Ahilyanagar.
-Write a Facebook post for 'Kaydyacha Fayda' in Puneri Marathi.
-Topic: {niche} focusing on {perspective}.
-Format: Bold Headline, 4-5 lines problem, 6-8 lines solution, and a question.
-Do not repeat: {past_topics}.
-"""
-
-print(f"Generating post for: {niche}...")
+# --- 4. GENERATE CONTENT (2026 STABLE MODELS) ---
+prompt = f"Adv. Sagar Shirsat म्हणून 'कायद्याचा फायदा' साठी {niche} ({perspective}) वर पोस्ट लिहा. शुद्ध पुणेरी मराठी वापरा."
 
 try:
-    # Switched to gemini-1.5-flash for better free-tier stability
+    # UPDATED MODEL NAMES FOR MAY 2026
+    # 'gemini-3.1-flash-lite' is the current fastest/free stable model
     response = client.models.generate_content(
-        model="gemini-1.5-flash", 
+        model="gemini-3.1-flash-lite", 
         contents=prompt
     )
-    
-    if not response.text:
-        raise ValueError("AI returned empty response")
-        
     post_text = response.text
-    # ... (Rest of your Facebook posting code)
 
-    # --- 5. POST TO FACEBOOK ---
+    # --- 5. POST TO FB ---
     graph.put_object(parent_object=FB_PAGE_ID, connection_name='feed', message=post_text)
-    print("Post successfully published!")
+    print("Victory! Post published.")
 
-    # --- 6. UPDATE HISTORY & STATE ---
-    history.append(f"{niche}: {perspective[:30]}")
-    with open(HISTORY_FILE, "w") as f:
-        json.dump(history[-100:], f, indent=4)
-    with open(STATE_FILE, "w") as f:
-        json.dump(state, f, indent=4)
+    # --- 6. SAVE ---
+    history.append(f"{niche}: {perspective}")
+    with open(HISTORY_FILE, "w") as f: json.dump(history[-50:], f)
+    with open(STATE_FILE, "w") as f: json.dump(state, f)
 
 except Exception as e:
     print(f"Error: {e}")
-    exit(1)
+    # If 3.1 is busy, try the 2.5 version as a backup
+    print("Attempting backup model gemini-2.5-flash...")
+    response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+    graph.put_object(parent_object=FB_PAGE_ID, connection_name='feed', message=response.text)
