@@ -24,7 +24,7 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
-        run: python fb_bot.py
+        run: python tg_bot.py
 
       - name: Commit and Push History
         run: |
