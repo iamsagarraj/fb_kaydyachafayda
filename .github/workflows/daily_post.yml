@@ -31,5 +31,7 @@ jobs:
           git config --global user.name 'AdvSagarBot'
           git config --global user.email 'bot@users.noreply.github.com'
           git add post_history.json niche_state.json
-          git commit -m "Update post history" || exit 0
-          git push
+          # This line handles the 'out of sync' error
+          git pull --rebase origin main 
+          git commit -m "Update post history [skip ci]" || exit 0
+          git push origin main
