@@ -30,8 +30,22 @@ jobs:
         run: |
           git config --global user.name 'AdvSagarBot'
           git config --global user.email 'bot@users.noreply.github.com'
+          
+          # 1. Stage the files first
           git add post_history.json niche_state.json
-          # This line handles the 'out of sync' error
-          git pull --rebase origin main 
+          
+          # 2. Stash them temporarily to allow the pull
+          git stash
+          
+          # 3. Pull the latest changes from the repo
+          git pull --rebase origin main
+          
+          # 4. Bring the files back from the stash
+          git stash pop || echo "No changes to pop"
+          
+          # 5. Re-stage and commit
+          git add post_history.json niche_state.json
           git commit -m "Update post history [skip ci]" || exit 0
+          
+          # 6. Push it home
           git push origin main
