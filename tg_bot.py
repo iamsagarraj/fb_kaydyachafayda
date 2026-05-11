@@ -53,10 +53,24 @@ for i in range(1, 4):
         )
         article = output.choices[0].message.content
 
-        # Send to Telegram
-        msg_header = f"✅ *POST #{i}* ({niche})\n\n"
-        send_tg_message(msg_header + article)
-        
+        # --- 5. SEND TO TELEGRAM ---
+    tg_url = f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": TG_CHAT_ID,
+        "text": f"🚀 *Tadaaaah! Post generated:*\n\n{article}",
+        "parse_mode": "Markdown"
+    }
+    
+    response = requests.post(tg_url, data=payload)
+    
+    # DEBUG LOGS - This will show us the truth!
+    print(f"Telegram Response Status: {response.status_code}")
+    print(f"Telegram Response Body: {response.text}")
+    
+    if response.status_code != 200:
+        print("❌ Telegram failed to send the message!")
+    else:
+        print("✅ Telegram says it sent the message successfully.")
         # Save to history
         history.append(f"Post {i} - {niche}: {topic}")
 
