@@ -17,8 +17,17 @@ STATE_FILE = "niche_state.json"
 # --- 2. HELPER: TELEGRAM SENDER ---
 def send_tg_message(text):
     url = f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage"
-    payload = {"chat_id": TG_CHAT_ID, "text": text, "parse_mode": "Markdown"}
-    requests.post(url, data=payload)
+    # We REMOVE parse_mode entirely to ensure the message delivers no matter what
+    payload = {
+        "chat_id": TG_CHAT_ID, 
+        "text": text
+    } 
+    r = requests.post(url, data=payload)
+    print(f"Status: {r.status_code}, Response: {r.text}")
+    
+    if r.status_code != 200:
+        # If it fails, try one more time with a very simple string
+        requests.post(url, data={"chat_id": TG_CHAT_ID, "text": "Emergency Test: Bot is working!"})
 
 # --- 3. INITIALIZE FILES ---
 if not os.path.exists(HISTORY_FILE):
